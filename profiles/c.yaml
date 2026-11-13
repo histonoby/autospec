@@ -1,0 +1,35 @@
+# NOTE: gates are provisional (spec §7.4 defaults). Port the real values from harness/verify_gate.sh (§21).
+name: c
+display_name: "C (C11)"
+extensions: [".c", ".h"]
+sandbox_image: "gcc:13"
+code_fence_tags: [c, h]
+test_instructions: |
+  C言語（C11）の単体テストコード（main 関数を含む自己完結ファイル）を作成してください。
+  - `#include "{if_name}"` と `#include "autospec_test.h"` を必ずインクルードすること。`assert.h` は使わないこと。
+  - 各テストは `static void test_REQ001_<内容>(void)` の形の関数にし、先頭で `TEST_BEGIN("test_REQ001_<内容>");` を呼ぶこと。
+  - 検査には `CHECK(cond)`, `CHECK_EQ_INT(actual, expected)`, `CHECK_NEAR(actual, expected, eps)` を使うこと。浮動小数点の比較に `==` を使わないこと。
+  - main では全テスト関数を順に呼び、最後に `return AUTOSPEC_SUMMARY();` とすること。
+  - テスト対象の関数本体をこのファイル内に定義しないこと。`-Wall -Werror` で警告が出ないように書くこと。
+scaffold: |
+  #include "{if_name}"
+
+  // TODO: Implement functions declared in {if_name}
+stub_instructions: |
+  {if_name} で宣言された全関数について、何もせずゼロ値（void なら空、ポインタなら NULL）を返す最小実装を書いてください。
+  `#include "{if_name}"` を含め、`-Wall -Werror` で警告が出ないよう未使用引数は `(void)arg;` で消してください。
+gates:
+  syntax: "cc -std=c11 -Wall -Werror -I {interface_dir} -fsyntax-only {test}"
+  full: "cc -std=c11 -Wall -Werror -I {interface_dir} -o {build_dir}/test_bin {impl} {test} -lm && {build_dir}/test_bin"
+  interface: "cc -std=c11 -fsyntax-only -x c {interface}"
+red_check: true
+sanity_patterns: ['\bmain\s*\(']
+error_patterns: ['error:', '^FAIL ', 'FATAL', 'undefined reference', 'Undefined symbols', 'Segmentation fault', 'Abort']
+failure_count_pattern: 'FAILED: (\d+)'
+failed_test_pattern: '^FAIL (\S+) '
+test_name_pattern: 'test_{req_id_compact}_\w+'
+support_files: [autospec_test.h]
+timeouts: { syntax: 60, full: 300, interface: 60 }
+post_gates: []
+signature_patterns:
+  - '^\s*[\w\*\s]+\s+\**(\w+)\s*\([^;]*\)\s*\{'

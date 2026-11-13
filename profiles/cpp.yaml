@@ -1,0 +1,35 @@
+# NOTE: gates are provisional (spec §7.4 defaults). Port the real values from harness/verify_gate.sh (§21).
+name: cpp
+display_name: "C++ (C++17)"
+extensions: [".cpp", ".cc", ".cxx", ".hpp", ".hh", ".h"]
+sandbox_image: "gcc:13"
+code_fence_tags: [cpp, c++, cxx, cc, hpp, h]
+test_instructions: |
+  C++17 の単体テストコード（main 関数を含む自己完結ファイル）を作成してください。
+  - `#include "{if_name}"` と `#include "autospec_test.h"` を必ずインクルードすること。`assert` や外部テストフレームワークは使わないこと。
+  - 各テストは `static void test_REQ001_<内容>()` の形の関数にし、先頭で `TEST_BEGIN("test_REQ001_<内容>");` を呼ぶこと。
+  - 検査には `CHECK(cond)`, `CHECK_EQ_INT(actual, expected)`, `CHECK_NEAR(actual, expected, eps)` を使うこと。
+  - main では全テスト関数を順に呼び、最後に `return AUTOSPEC_SUMMARY();` とすること。
+  - テスト対象の関数本体をこのファイル内に定義しないこと。`-Wall -Werror` で警告が出ないように書くこと。
+scaffold: |
+  #include "{if_name}"
+
+  // TODO: Implement declarations from {if_name}
+stub_instructions: |
+  {if_name} で宣言された全関数・メンバ関数について、何もせず既定値（`{}`）を返す最小実装を書いてください。
+  `#include "{if_name}"` を含め、未使用引数の警告が出ないようにしてください。
+gates:
+  syntax: "c++ -std=c++17 -Wall -Werror -I {interface_dir} -fsyntax-only {test}"
+  full: "c++ -std=c++17 -Wall -Werror -I {interface_dir} -o {build_dir}/test_bin {impl} {test} && {build_dir}/test_bin"
+  interface: "c++ -std=c++17 -fsyntax-only -x c++ {interface}"
+red_check: true
+sanity_patterns: ['\bmain\s*\(']
+error_patterns: ['error:', '^FAIL ', 'FATAL', 'undefined reference', 'Undefined symbols', 'Segmentation fault', 'terminate called']
+failure_count_pattern: 'FAILED: (\d+)'
+failed_test_pattern: '^FAIL (\S+) '
+test_name_pattern: 'test_{req_id_compact}_\w+'
+support_files: [autospec_test.h]
+timeouts: { syntax: 60, full: 300, interface: 60 }
+post_gates: []
+signature_patterns:
+  - '^\s*[\w:\*&<>\s]+\s+[\*&]?([\w:~]+)\s*\([^;]*\)\s*(const\s*)?\{'

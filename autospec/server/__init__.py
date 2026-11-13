@@ -1,0 +1,1 @@
+"""FastAPI server (M2)."""

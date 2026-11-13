@@ -1,0 +1,31 @@
+# NOTE: gates are provisional (spec §7.4 defaults). Port the real values from harness/verify_gate.sh (§21).
+name: python
+display_name: "Python (pytest)"
+extensions: [".py"]
+sandbox_image: "python:3.12"
+code_fence_tags: [python, py, python3]
+test_instructions: |
+  pytest 形式の単体テストファイルを作成してください。
+  - テスト対象は `{impl_stem}` モジュールです（`from {impl_stem} import ...` のように import すること）。インターフェース定義は {if_name} です。
+  - 各テスト関数は `def test_REQ001_<内容>():` のように要件IDを名前に含めること。
+  - 浮動小数点は `pytest.approx` で比較すること。例外は `pytest.raises` で検査すること。
+  - テスト対象の関数本体をこのファイル内に定義しないこと。
+scaffold: |
+  # TODO: Implement the interface described in {if_name}
+stub_instructions: |
+  {if_name} に定義された全関数・クラスについて、何もせず None / 0 / 空を返す最小実装を書いてください（モジュール名は {impl_stem}）。
+gates:
+  syntax: "{python} -m py_compile {test}"
+  full: "{python} -m pytest -q -p no:cacheprovider {test}"
+red_check: true
+sanity_patterns: ['^\s*def test_\w+']
+error_patterns: ['Error', '^FAILED ', '^E ', 'FATAL']
+failure_count_pattern: '(\d+) (?:failed|error)'
+failed_test_pattern: '^FAILED \S+::(\w+)'
+test_name_pattern: 'test_{req_id_compact}_\w+'
+support_files: []
+timeouts: { syntax: 60, full: 300 }
+post_gates: []
+signature_patterns:
+  - '^\s*def\s+(\w+)\s*\('
+  - '^\s*class\s+(\w+)'

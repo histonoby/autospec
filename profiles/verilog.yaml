@@ -1,0 +1,32 @@
+# NOTE: gates are provisional (spec §7.4, §21: simulator not decided). Port from harness/verify_gate.sh.
+# full = iverilog simulation; the testbench must print PASS / FATAL (autospec_tb.svh).
+name: verilog
+display_name: "SystemVerilog (iverilog)"
+extensions: [".sv", ".v", ".svh"]
+sandbox_image: "hdlc/sim:osvb"
+code_fence_tags: [systemverilog, verilog, sv, v]
+test_instructions: |
+  SystemVerilog のテストベンチ（自己完結した tb モジュール）を作成してください。
+  - `` `include "autospec_tb.svh" `` を先頭でインクルードし、モジュール内で `` `AUTOSPEC_TB_DECLS `` を宣言すること。
+  - 検査には `` `CHECK_EQ(actual, expected, "test_REQ001_<内容>") `` を使い、名前に要件IDを含めること。
+  - ウォッチドッグ `` `AUTOSPEC_WATCHDOG(100000) `` を必ず入れること（無限待ちを防ぐ）。
+  - 最後に `` `AUTOSPEC_FINISH `` を呼ぶこと（PASSED/FAILED の集計と PASS / FATAL: mismatch を出力する）。
+  - テスト対象モジュール（{if_name} の宣言どおり）の本体を tb 内に定義しないこと。
+scaffold: |
+  // TODO: Implement the module declared in {if_name}
+stub_instructions: |
+  {if_name} で宣言されたモジュールについて、全出力を 0 に固定するだけの最小実装を書いてください（ポート宣言は同一にすること）。
+gates:
+  syntax: "iverilog -g2012 -t null -I {workdir} {interface} {test}"   # interface = port-only module skeleton
+  full: "iverilog -g2012 -I {workdir} -o {build_dir}/sim.vvp {impl} {test} && vvp -n {build_dir}/sim.vvp > {build_dir}/sim.log 2>&1; rc=$?; cat {build_dir}/sim.log; [ $rc -eq 0 ] && grep -q '^PASS' {build_dir}/sim.log && ! grep -q 'FATAL' {build_dir}/sim.log"
+red_check: true
+sanity_patterns: ['\bmodule\s+\w+', 'AUTOSPEC_FINISH']
+error_patterns: ['error', 'syntax error', '^FAIL ', 'FATAL']
+failure_count_pattern: 'FAILED: (\d+)'
+failed_test_pattern: '^FAIL (\S+) '
+test_name_pattern: 'test_{req_id_compact}_\w+'
+support_files: [autospec_tb.svh]
+timeouts: { syntax: 60, full: 600, synth: 7200 }
+post_gates: []   # e.g. [synth] with gates.synth = Vivado batch + WNS >= 0 check (user environment)
+signature_patterns:
+  - '^\s*module\s+(\w+)'

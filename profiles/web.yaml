@@ -1,0 +1,33 @@
+# NOTE: gates are provisional (spec §7.4, §21: runner not decided yet). Port from harness/verify_gate.sh.
+# Requires typescript + tsx resolvable via npx (project-local node_modules recommended).
+name: web
+display_name: "Web (TypeScript, node:test)"
+extensions: [".ts", ".tsx"]
+sandbox_image: "node:20"
+code_fence_tags: [ts, typescript, tsx]
+test_instructions: |
+  TypeScript の単体テストファイルを node:test 形式で作成してください。
+  - `import { test } from "node:test";` と `import assert from "node:assert/strict";` を使うこと。
+  - テスト対象は `./{impl_stem}.ts` から import すること（拡張子 .ts を付ける。tsconfig の allowImportingTsExtensions と揃える）。インターフェース定義は {if_name} です。
+  - 各テストは `test("test_REQ001_<内容>", () => {...})` のように要件IDを名前に含めること。
+  - テスト対象の関数本体をこのファイル内に定義しないこと。
+scaffold: |
+  // TODO: Implement the interface declared in {if_name}
+  export {};
+stub_instructions: |
+  {if_name} で宣言された全関数について、何もせず 0 / 空文字 / undefined を返す最小実装を書いてください（export すること）。
+gates:
+  syntax: "npx --no-install tsc --noEmit --strict --target es2022 --module nodenext --moduleResolution nodenext --allowImportingTsExtensions --skipLibCheck {test}"
+  full: "npx --no-install tsx --test --test-reporter=tap {test}"
+red_check: true
+sanity_patterns: ['\btest\s*\(']
+error_patterns: ['error TS\d+', '^not ok ', 'Error:', 'FATAL']
+failure_count_pattern: '# fail (\d+)'
+failed_test_pattern: '^\s*not ok \d+ - (\S+)'
+test_name_pattern: 'test_{req_id_compact}_\w+'
+support_files: []
+timeouts: { syntax: 120, full: 300, e2e: 600 }
+post_gates: []
+signature_patterns:
+  - 'export\s+(?:async\s+)?function\s+(\w+)'
+  - 'export\s+(?:const|class|interface|type)\s+(\w+)'

@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autospec"
+version = "0.2.0"
+description = "Local-LLM (Ollama + Qwen) and Aider based autonomous development pipeline"
+requires-python = ">=3.11"
+dependencies = [
+  "pydantic>=2.6",
+  "pyyaml>=6",
+]
+
+[project.optional-dependencies]
+server = ["fastapi>=0.110", "uvicorn>=0.29", "sse-starlette>=2"]
+aider = ["aider-chat"]
+dev = ["pytest>=8", "ruff>=0.4", "mypy>=1.10", "types-PyYAML"]
+
+[project.scripts]
+autospec = "autospec.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["autospec*"]
+
+[tool.setuptools.package-data]
+autospec = ["pipelines/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "ollama: requires a running Ollama with the configured model (manual)",
+  "aider: requires the real aider binary (manual)",
+  "hardware: requires real hardware (manual)",
+]
+addopts = "-m 'not ollama and not aider and not hardware'"
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+extend-exclude = ["legacy", "tests/fixtures"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+check_untyped_defs = true
+exclude = ["legacy/", "tests/fixtures/"]
