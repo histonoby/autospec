@@ -1,0 +1,50 @@
+# AutoSpec settings (§16). Copy to config.yaml (or point AUTOSPEC_CONFIG at it).
+# Every key can be overridden by AUTOSPEC_<SECTION>_<KEY>, e.g. AUTOSPEC_OLLAMA_MODEL=local-coder-64k.
+ollama:
+  url: "http://127.0.0.1:11434"
+  model: "local-coder-64k"        # scripts/create_ollama_model.sh <qwen3.8 tag> local-coder-64k 65536
+  num_ctx: 65536
+  temperature: 0.2
+  timeout_sec: 600
+  send_think: true                # auto-disabled when the model rejects the think field
+  no_think_suffix: true           # append /no_think when think=false
+paths:
+  data_dir: "~/autospec/data"
+  workspaces_root: "~/autospec/workspaces"
+  harness_dir: "./harness"        # resolved to an absolute path relative to this file
+  profiles_dir: "./profiles"
+  test_support_dir: "./test_support"
+  targets_dir: "./targets"
+server:
+  host: "127.0.0.1"
+  port: 8765
+auth:
+  token: ""                       # required when host is 0.0.0.0 (M3)
+sandbox:
+  mode: "local"                   # local | docker
+  gate_timeout_sec: 300
+aider:
+  bin: "aider"                    # setup_ubuntu.sh points this at .venv-aider/bin/aider
+  max_rounds: 5
+  timeout_sec: 1800
+  suspect_after_rounds: 3
+  extra_args: []
+pipeline:
+  test_gen_max_retries: 4
+  approval_max_rejects: 3
+  analyze_max_relevant_files: 8
+  max_file_bytes: 200000
+  output_reserve_tokens: 8192
+  chars_per_token: 3
+  retry_temperature_step: 0.15
+  retry_temperature_max: 0.7
+  error_digest_chars: 2500
+  max_jumps: 10
+hw:
+  targets_dir: "./targets"
+  default_mode: mock
+  llm_tool_mode: native
+  max_llm_tool_calls: 10
+  max_hw_rounds: 3
+  lock_wait_timeout_sec: 1800
+  agents: {}
