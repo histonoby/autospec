@@ -10,6 +10,8 @@
 | M1 コア分解・旧スクリプト改善（CLI 互換） | 実装済み。FakeLLM でテスト全件 PASS。**Qwen3.8 での受入確認は Ubuntu で実施** |
 | M2〜M9（サーバー・UI・analyze/design/modify・実機検証） | 未着手 |
 
+Mac での実 LLM スモーク（2026-11-13、Qwen3.8 の代わりに qwen2.5-coder:14b・num_ctx 16384）：C の飽和演算サンプルが 3分53秒で一周し、aider ラウンド 1 でゲート PASS、監査 PASS（スコア 100）。
+
 ## 役割分担
 
 - **Mac（この開発環境）**：コードの生成とテストだけを行う。LLM は FakeLLM、aider は偽の実行ファイル、C は実コンパイラでテストする。

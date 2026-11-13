@@ -28,6 +28,7 @@ class PrepareWorkspace(Step):
             ctx.workdir = Path(ctx.state["workdir"])
             return StepResult.done("準備済み（再開）")
         ws.ensure_repo()
+        ws.exclude_locally([".aider*"])  # aider's repo-map cache must not show up as an untracked change
         mode = ctx.opt("workdir_mode", "inplace")
         root = ws.root.resolve()
 

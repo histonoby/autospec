@@ -56,6 +56,8 @@ def test_happy_path_and_artifacts(run_impl) -> None:
     assert (r.ctx.workdir / "tests" / "autospec_test.h").exists()
     assert not os.access(test_file, os.W_OK)  # lock_tests
     assert (r.rec.job_dir(r.ctx.settings) / "events.log").exists()  # L4
+    status = subprocess.run(["git", "status", "--porcelain"], cwd=r.ctx.workdir, capture_output=True, text=True)
+    assert status.stdout.strip() == ""  # everything committed, aider cache excluded
 
 
 def test_aider_command_line(run_impl) -> None:

@@ -69,6 +69,19 @@ class Workspace:
         if not self.has_commits():
             git(["commit", "-q", "--allow-empty", "-m", "autospec: initial commit"], self.root)
 
+    def exclude_locally(self, patterns: Sequence[str]) -> None:
+        """Add patterns to .git/info/exclude (shared by worktrees, never committed, no tracked file changes)."""
+        common = Path(git(["rev-parse", "--git-common-dir"], self.root).strip())
+        if not common.is_absolute():
+            common = self.root / common
+        exclude = common / "info" / "exclude"
+        exclude.parent.mkdir(parents=True, exist_ok=True)
+        current = exclude.read_text(encoding="utf-8").splitlines() if exclude.exists() else []
+        missing = [p for p in patterns if p not in current]
+        if missing:
+            with exclude.open("a", encoding="utf-8") as f:
+                f.write("".join(f"{p}\n" for p in missing))
+
     def head(self) -> str:
         return git(["rev-parse", "HEAD"], self.root).strip()
 

@@ -25,6 +25,7 @@ def main() -> int:
     idx = argv.index("--message")
     editable = argv[idx + 2:]
     print(f"fake-aider call {n + 1} editable={editable}")
+    Path(".aider.tags.cache.v4").mkdir(exist_ok=True)  # like the real aider's repo-map cache
     if call.get("stdout"):
         print(call["stdout"])
     if call.get("write") is not None and editable:
