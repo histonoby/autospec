@@ -20,7 +20,8 @@ Mac での実 LLM スモーク（2026-11-13、Qwen3.8 の代わりに qwen2.5-co
 ## Ubuntu へのセットアップ
 
 ```bash
-git clone https://github.com/histonoby/autospec.git && cd autospec
+# private リポジトリのため、初回は認証（sudo apt install gh && gh auth login、または SSH 鍵）
+gh repo clone histonoby/autospec && cd autospec
 ollama pull <Qwen3.8 のタグ>            # まだなら
 scripts/setup_ubuntu.sh <Qwen3.8 のタグ>  # venv・aider・config.yaml・local-coder-64k 作成・自己テスト
 ```
