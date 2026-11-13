@@ -971,7 +971,7 @@ hw:                               # 第2部
 
 実装中に判明したことはここに追記すること。
 
-- `harness/verify_gate.sh` の各言語の実際の処理内容（M1 着手時に確認）
+- ~~`harness/verify_gate.sh` の各言語の実際の処理内容~~ → 使わないと決定（下記 M1 追記）
 - web / verilog プロファイルで使うテストランナー・シミュレータ（例：tsx + node:test、iverilog / verilator）の確定
 - Docker イメージを言語ごとに用意するか、共通イメージにするか
 - design パイプラインでの出力ファイル名・配置規約の既定値
@@ -983,7 +983,7 @@ hw:                               # 第2部
 
 ### M1 実装時の追記（2026-11-13）
 
-- **旧スクリプトと `harness/verify_gate.sh` が開発環境（Mac）に無い。** M1 は本書 §7.4 の仮コマンドでプロファイルを作成した。Ubuntu 側の2ファイルを `legacy/` `harness/` に置いたら、ゲートの中身を比較してプロファイルへ移植する（§0 の「移植前にユーザーへ確認」はこの時点で行う）。
+- **【決定 2026-11-13・オーナー】旧スクリプトと `harness/verify_gate.sh` は使わない。** `profiles/*.yaml` のゲートと本実装を正とする。§0 の「`legacy/` に無改変で保存」「`verify_gate.sh` から移植」、§19 M1 受入の「旧スクリプトの C サンプルで同等以上」は適用しない。M1 の実 LLM 受入は `tests/fixtures/c_sample` を使う `pytest -m ollama` で行う。`{harness}` プレースホルダと `harness/` は独自スクリプトを置きたいときの任意の置き場として残す。
 - **テスト名の規約の食い違い。** §7.3 の `test_name_pattern` 例は `test_{req_id_compact}_\w+`、`autospec_test.h` の例は `TEST_BEGIN("REQ001_xxx")`。M1 は前者に統一し、C/C++ は `static void test_REQ001_xxx(void)` ＋ `TEST_BEGIN("test_REQ001_xxx")` とした。
 - **プロファイルにキーを追加した。** `failed_test_pattern`（失敗したテスト名の抽出。§9 のテスト疑義に必要）、`interface_instructions`（design 用・M5）、`infra_error_patterns`（予約）。ゲートのプレースホルダに `{build_dir}`（ジョブごとのビルド出力先。旧 `/tmp/t` の衝突回避）、`{interface_dir}`（`-I` 用）、`{python}`（AutoSpec の venv の Python）を追加した。
 - **CLI の作業場所。** `autospec run` の既定は旧スクリプト互換の「その場で作業」（inplace：入力ファイルと各ラウンドを現在のブランチにコミット）。`--worktree` で `DATA_DIR/worktrees/job-<id>` に分離する。Web（M2〜）は worktree を既定にする想定。

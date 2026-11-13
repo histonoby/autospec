@@ -15,24 +15,19 @@ Mac での実 LLM スモーク（2026-11-13、Qwen3.8 の代わりに qwen2.5-co
 ## 役割分担
 
 - **Mac（この開発環境）**：コードの生成とテストだけを行う。LLM は FakeLLM、aider は偽の実行ファイル、C は実コンパイラでテストする。
-- **Ubuntu（実際の開発環境）**：Qwen3.8 と実 aider で動かす。成果物はこのリポジトリを `scripts/package.sh` で固めて移す。
+- **Ubuntu（実際の開発環境）**：Qwen3.8 と実 aider で動かす。成果物は GitHub（histonoby/autospec）経由で移す。
 
 ## Ubuntu へのセットアップ
 
 ```bash
-# Mac 側
-scripts/package.sh                     # dist/autospec-0.2.0.tar.gz
-scp dist/autospec-0.2.0.tar.gz <ubuntu>:~/
-
-# Ubuntu 側
-tar xzf autospec-0.2.0.tar.gz && cd autospec
+git clone https://github.com/histonoby/autospec.git && cd autospec
 ollama pull <Qwen3.8 のタグ>            # まだなら
 scripts/setup_ubuntu.sh <Qwen3.8 のタグ>  # venv・aider・config.yaml・local-coder-64k 作成・自己テスト
 ```
 
 `setup_ubuntu.sh` は sudo を実行しません。足りないパッケージ（python3.11+、venv、build-essential など）は表示されるので、それを入れてから再実行してください。aider は依存の固定が多いため `.venv-aider` に分けて入れます。
 
-旧スクリプトと `verify_gate.sh` を `legacy/` と `harness/` に置いてください（M1 のゲートは仕様書の仮コマンド。移植は次の作業です）。
+ゲートコマンドは `profiles/*.yaml` が正です（旧スクリプト・旧 `verify_gate.sh` は使いません）。プロジェクトごとの差し替えは `<workspace>/.autospec/workspace.yaml` の `gates` で行います。
 
 ## Ubuntu での受入確認（M1）
 
@@ -41,7 +36,7 @@ scripts/setup_ubuntu.sh <Qwen3.8 のタグ>  # venv・aider・config.yaml・loca
 AUTOSPEC_CONFIG=$PWD/config.yaml .venv/bin/pytest -m ollama -s   # 実 Qwen3.8 + aider で C サンプル一周
 ```
 
-旧スクリプトで成功した C のサンプルでも確認します（旧と同じ引数です）。
+手元の C プロジェクトでも確認できます。
 
 ```bash
 cd <サンプルのディレクトリ>
@@ -57,11 +52,11 @@ AUTOSPEC_CONFIG=~/autospec/config.yaml ~/autospec/.venv/bin/autospec run impleme
 
 | コマンド | 内容 |
 | :-- | :-- |
-| `autospec run implement --lang c --spec S --interface I --impl X --test T` | 旧スクリプト互換。`--worktree`、`--max-rounds`、`--reuse-tests`、`--model` など |
+| `autospec run implement --lang c --spec S --interface I --impl X --test T` | 実装パイプライン。`--worktree`、`--max-rounds`、`--reuse-tests`、`--model` など |
 | `autospec resume <job> [--from-step N]` | 中断・失敗したジョブの再開 |
 | `autospec approve <job> <target> [--reject --comment ...]` | 承認の記録（M5 以降で使用） |
 | `autospec gate full --job <job>` | ゲートの単体実行（aider の `--test-cmd` から呼ばれる） |
-| `autospec gate full --lang c --interface I --impl X --test T` | ジョブ無しでゲートだけ実行（verify_gate.sh の代わり） |
+| `autospec gate full --lang c --interface I --impl X --test T` | ジョブ無しでゲートだけ実行 |
 | `autospec profiles` / `autospec health` | プロファイル一覧／Ollama・モデル・aider の確認 |
 
 ## セキュリティ
