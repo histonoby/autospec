@@ -23,7 +23,7 @@ Mac での実 LLM スモーク（2026-11-13、Qwen3.8 の代わりに qwen2.5-co
 # private リポジトリのため、初回は認証（sudo apt install gh && gh auth login、または SSH 鍵）
 gh repo clone histonoby/autospec && cd autospec
 ollama pull <Qwen3.8 のタグ>            # まだなら
-scripts/setup_ubuntu.sh <Qwen3.8 のタグ>  # venv・aider・config.yaml・local-coder-64k 作成・自己テスト
+scripts/setup_ubuntu.sh <Qwen3.8 のタグ> [別名=local-coder-64k]  # venv・aider・config.yaml・別名作成・自己テスト
 ```
 
 `setup_ubuntu.sh` は sudo を実行しません。足りないパッケージ（python3.11+、venv、build-essential など）は表示されるので、それを入れてから再実行してください。aider は依存の固定が多いため `.venv-aider` に分けて入れます。
