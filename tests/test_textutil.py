@@ -97,10 +97,12 @@ def test_real_compiler_first_error_is_in_digest(tmp_path: Path) -> None:
     body = ["int first_bug(void) { return undefined_symbol_alpha; }"]
     body += [f"int f{i}(void) {{ return missing_{i} + ; }}" for i in range(60)]
     src.write_text("\n".join(body) + "\n")
-    proc = subprocess.run(["cc", "-std=c11", "-fsyntax-only", "-ferror-limit=0", str(src)],
+    version = subprocess.run(["cc", "--version"], capture_output=True, text=True).stdout
+    no_limit = "-ferror-limit=0" if "clang" in version.lower() else "-fmax-errors=0"  # gcc rejects the clang flag
+    proc = subprocess.run(["cc", "-std=c11", "-fsyntax-only", no_limit, str(src)],
                           capture_output=True, text=True)
     out = proc.stdout + proc.stderr
-    assert proc.returncode != 0 and len(out) > 2000
+    assert proc.returncode != 0 and len(out) > 2000, out[:500]
     d = extract_error_digest(out, ["error:"], 800)
     assert "undefined_symbol_alpha" in d
 
