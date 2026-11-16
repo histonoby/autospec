@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 # AutoSpec setup on Ubuntu (no sudo is run by this script; missing system packages are listed for you).
-# Usage: scripts/setup_ubuntu.sh [qwen-base-model-tag]
-#   With a tag, it also creates the Ollama alias local-coder-64k (num_ctx 65536) from it.
+# Usage: scripts/setup_ubuntu.sh [qwen-base-model-tag] [alias=local-coder-64k]
+#   With a tag, it also creates the Ollama alias (num_ctx 65536) from it.
+#   A new config.yaml gets ollama.model = alias; an existing config.yaml is left as is (a warning is shown).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$(pwd)"
+ALIAS="${2:-local-coder-64k}"
 missing=()
 
 pick_python() {
@@ -36,8 +38,11 @@ echo "== aider venv (isolated: aider pins many libraries)"
 .venv-aider/bin/aider --version
 
 if [ ! -f config.yaml ]; then
-  sed "s#  bin: \"aider\".*#  bin: \"$ROOT/.venv-aider/bin/aider\"#" config.example.yaml > config.yaml
-  echo "== config.yaml を作成しました（aider.bin=$ROOT/.venv-aider/bin/aider）"
+  sed -e "s#  bin: \"aider\".*#  bin: \"$ROOT/.venv-aider/bin/aider\"#" \
+      -e "s#  model: \"local-coder-64k\"#  model: \"$ALIAS\"#" config.example.yaml > config.yaml
+  echo "== config.yaml を作成しました（ollama.model=$ALIAS, aider.bin=$ROOT/.venv-aider/bin/aider）"
+elif ! grep -q "model: \"$ALIAS\"" config.yaml; then
+  echo "== 注意: 既存の config.yaml の ollama.model が $ALIAS ではありません（$(grep -m1 '  model:' config.yaml | xargs)）"
 fi
 
 echo "== optional tools"
@@ -48,7 +53,7 @@ echo "  verilog: sudo apt install iverilog   / web: node 20+ と npm i -D typesc
 
 if command -v ollama >/dev/null; then
   if [ -n "${1:-}" ]; then
-    scripts/create_ollama_model.sh "$1" local-coder-64k 65536
+    scripts/create_ollama_model.sh "$1" "$ALIAS" 65536
   fi
 else
   echo "ollama が見つかりません: curl -fsSL https://ollama.com/install.sh | sh"
