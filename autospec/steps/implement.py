@@ -87,6 +87,14 @@ class Implement(Step):
         rounds: list[dict[str, Any]] = list(ctx.state.get("rounds", []))
         streak: dict[str, int] = dict(ctx.state.get("fail_streak", {}))
         reviewed: list[str] = list(ctx.state.get("reviewed_tests", []))
+        dispute = (ctx.state.get("approvals") or {}).get("test_dispute") or {}
+        if dispute.get("decision") in ("approve", "reject"):
+            decision, dispute["decision"] = dispute["decision"], None
+            ctx.events.emit("approval.resolved", f"test_dispute: {decision}",
+                            data={"target": "test_dispute", "decision": decision, "comment": dispute.get("comment")})
+            if decision == "reject":
+                return StepResult.failed("テストの疑義を認めて中止しました。テストを見直して再実行してください: "
+                                         + str(dispute.get("comment") or ""), error="test_dispute")
         feedback = ctx.state.pop("implement_feedback", "")
         if rounds and not feedback:
             feedback = rounds[-1].get("digest", "")

@@ -62,6 +62,7 @@ class PipelineRunner:
             ev.emit("step.end", f"{step.label}: スキップ", data={"status": "skipped", "idx": idx})
             return StepResult.skipped()
         rec.update(status="running", started_at=now_iso(), ended_at=None, message="")
+        self._save(idx, JobStatus.RUNNING)  # the UI / DB show the running step, not the previous outcome
         ev.emit("step.start", f"{step.label} 開始", data={"idx": idx})
         try:
             res = step.run(self.ctx)

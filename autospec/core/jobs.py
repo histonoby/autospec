@@ -1,10 +1,11 @@
-"""Job records (file based in M1: DATA_DIR/jobs/<id>/job.json; the SQLite store replaces it in M2)."""
+"""Job records. DATA_DIR/jobs/<id>/job.json is always written (the `autospec gate --job` subprocess reads it);
+the server additionally mirrors every save into SQLite through run_job(on_persist=...)."""
 
 from __future__ import annotations
 
 import json
 import os
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -77,7 +78,7 @@ def build_context(settings: Settings, rec: JobRecord, registry: Registry, *, llm
                   sinks: Sequence[Sink] = (), interactive: bool = False,
                   cancel: CancelToken | None = None) -> JobContext:
     job_dir = rec.job_dir(settings)
-    events = EventEmitter(rec.id, [JsonlFileSink(job_dir / "events.log"), *sinks])
+    events = EventEmitter(rec.id, [*sinks, JsonlFileSink(job_dir / "events.log")])  # DB sink assigns ids first
     artifacts = ArtifactStore(job_dir / "artifacts", events)
     cancel = cancel or CancelToken()
     ws = Workspace(rec.workspace, Path(rec.workspace_root))
@@ -100,7 +101,8 @@ def build_context(settings: Settings, rec: JobRecord, registry: Registry, *, llm
 
 def run_job(settings: Settings, rec: JobRecord, registry: Registry, *, llm: BaseLLMClient | None = None,
             sinks: Sequence[Sink] = (), start: int | None = None, interactive: bool = False,
-            cancel: CancelToken | None = None) -> tuple[JobStatus, JobContext]:
+            cancel: CancelToken | None = None,
+            on_persist: Callable[[JobRecord], None] | None = None) -> tuple[JobStatus, JobContext]:
     ctx = build_context(settings, rec, registry, llm=llm, sinks=sinks, interactive=interactive, cancel=cancel)
     steps = registry.build(rec.pipeline, [tuple(x) for x in rec.options.get("extra_steps", [])])
 
@@ -110,8 +112,12 @@ def run_job(settings: Settings, rec: JobRecord, registry: Registry, *, llm: Base
         rec.state = ctx.state
         rec.error = ctx.state.get("_error")
         rec.save(settings)
+        if on_persist:
+            on_persist(rec)
 
     rec.status = JobStatus.RUNNING.value
     rec.save(settings)
+    if on_persist:
+        on_persist(rec)
     status = PipelineRunner(steps, ctx, persist).run(rec.current_step if start is None else start)
     return status, ctx

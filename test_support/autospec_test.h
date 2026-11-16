@@ -51,6 +51,8 @@ static inline int autospec_summary_(void) {
 }
 
 #define TEST_BEGIN(name) autospec_begin_((name))
+/* No-op pair for TEST_BEGIN: models often write it, and the result is the same. */
+#define TEST_END() ((void)0)
 
 #define CHECK(cond)                                                    \
     do {                                                               \
