@@ -10,3 +10,4 @@ config.yaml
 .venv-aider/
 .claude/
 web/node_modules/
+*.tsbuildinfo
