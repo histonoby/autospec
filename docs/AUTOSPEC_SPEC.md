@@ -995,6 +995,16 @@ hw:                               # 第2部
 - **aider に追加したオプション**：`--no-check-update --no-show-release-notes --analytics-disable --no-gitignore --no-pretty --no-fancy-input` と、履歴ファイルをジョブディレクトリへ置く指定。対話プロンプトと作業ツリーへの書き込みを防ぐため。
 - **テスト疑義（test_dispute）の Web 承認と「該当テストだけロック解除して再生成」**は M2/M5（承認 UI）で実装する。M1 の CLI では §9 どおり理由を表示して中止する。
 
+### M2 実装時の追記（2026-11-16）
+
+- **【要件 2026-11-16・オーナー】M2 はいったん Ubuntu 上で完結して見られればよい。** サーバーは `127.0.0.1` 専用で、ループバック以外のホストでは起動を拒否する（トークン認証・Cookie・外部公開は M3）。
+- **Web のジョブも M2 では inplace。** 上の「Web は worktree を既定にする想定」は、マージ／破棄の操作がそろう M3 に回す。M2 のワークスペースは `workspaces_root` に取り込んだ複製なので、利用者の元のリポジトリは変わらない。
+- **job.json と SQLite を両方書く。** aider の `--test-cmd` から呼ばれる `autospec gate --job` が job.json を読むため。API とワーカーは SQLite を正とし、保存のたびに job.json へも書き出す。
+- **イベント ID は DB の連番。** SSE は `?after=` と `Last-Event-ID` の大きい方から再送する（EventSource の自動再接続は元の URL に Last-Event-ID を付けて来るため）。ジョブが終了状態でイベントを出し切ったら `event: end` を送って閉じる。
+- **test_dispute の承認の意味を決めた。** 承認＝「テストは正しい、このまま続行」、却下＝「中止してテストを見直す」（`test_dispute` で失敗）。§9 の「該当テストだけロック解除して再生成」は M5 の承認 UI 拡張で扱う。
+- **UI は React + Vite + TypeScript。ビルド済みの `web/dist` をリポジトリに同梱する**（Ubuntu に Node を要求しないため）。Markdown は `marked` で表示し、LLM 出力に含まれる生 HTML は文字として表示する。差分は diff2html ではなく行の色分けで表示し、diff2html は差分タブを作る M3 で入れる。
+- **`GET /api/samples` と「すぐ試す」を追加した**（仕様外）。`tests/fixtures/c_sample` を取り込んで implement を開始する。M2 の受入を 1 クリックで確かめるため。
+
 ---
 
 # 第2部 実機検証（HIL）拡張
