@@ -29,7 +29,7 @@ fi
 echo "== AutoSpec venv ($PY)"
 "$PY" -m venv .venv
 .venv/bin/pip install -q --upgrade pip
-.venv/bin/pip install -q -e ".[dev]"
+.venv/bin/pip install -q -e ".[dev,server]"
 
 echo "== aider venv (isolated: aider pins many libraries)"
 "$PY" -m venv .venv-aider

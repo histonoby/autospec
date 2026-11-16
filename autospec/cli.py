@@ -1,4 +1,4 @@
-"""`autospec` command: run / resume / gate / approve / profiles / health."""
+"""`autospec` command: run / resume / gate / approve / profiles / health / serve."""
 
 from __future__ import annotations
 
@@ -137,6 +137,28 @@ def cmd_health(args: argparse.Namespace, settings: Settings) -> int:
     return EXIT_OK if info.get("ollama") and info.get("model_available") and info["aider"] else EXIT_FAILED
 
 
+LOOPBACK = {"127.0.0.1", "localhost", "::1"}
+
+
+def cmd_serve(args: argparse.Namespace, settings: Settings) -> int:
+    host = args.host or settings.server.host
+    port = args.port or settings.server.port
+    if host not in LOOPBACK:
+        print(f"host={host} では起動しません。M2 は認証が無いため 127.0.0.1 専用です（外部公開はトークン認証の M3 から）",
+              file=sys.stderr)
+        return 2
+    try:
+        import uvicorn
+
+        from .server.api import create_app
+    except ImportError:
+        print("サーバー用の依存がありません: .venv/bin/pip install -e '.[server]'", file=sys.stderr)
+        return 2
+    print(f"🌐 AutoSpec: http://{host}:{port}/  (model={settings.ollama.model}, data={settings.data_dir})")
+    uvicorn.run(create_app(settings), host=host, port=port, log_level="warning")
+    return EXIT_OK
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="autospec")
     ap.add_argument("--config", help="config.yaml path (default: $AUTOSPEC_CONFIG or ./config.yaml)")
@@ -190,6 +212,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_profiles)
     h = sub.add_parser("health", help="check Ollama / model / aider / docker")
     h.set_defaults(func=cmd_health)
+    sv = sub.add_parser("serve", help="start the Web UI / API server (M2: 127.0.0.1 only)")
+    sv.add_argument("--host")
+    sv.add_argument("--port", type=int)
+    sv.set_defaults(func=cmd_serve)
     return ap
 
 

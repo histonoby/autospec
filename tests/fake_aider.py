@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Stand-in for the aider binary (§20): writes fixed content per call, driven by $FAKE_AIDER_PLAN.
 
-Plan JSON: {"calls": [{"write": "<content>" | null, "exit": 0, "stdout": "..."}], "counter": "<path>",
+Plan JSON: {"calls": [{"write": "<content>" | null, "exit": 0, "stdout": "...", "sleep": sec, "pid_file": "<path>"}],
+            "counter": "<path>",
             "argv_log": "<path>", "tamper": "<relative test path to modify>" (optional, per call)}
 The editable files are the positional arguments after the --message value.
 """
@@ -9,6 +10,7 @@ The editable files are the positional arguments after the --message value.
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 
@@ -28,6 +30,11 @@ def main() -> int:
     Path(".aider.tags.cache.v4").mkdir(exist_ok=True)  # like the real aider's repo-map cache
     if call.get("stdout"):
         print(call["stdout"])
+    if call.get("pid_file"):
+        Path(call["pid_file"]).write_text(str(os.getpid()))
+    if call.get("sleep"):
+        sys.stdout.flush()
+        time.sleep(float(call["sleep"]))
     if call.get("write") is not None and editable:
         Path(editable[0]).write_text(call["write"], encoding="utf-8")
     if call.get("tamper"):
