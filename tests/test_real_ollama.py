@@ -29,6 +29,7 @@ def real_settings():  # type: ignore[no-untyped-def]
     health = OllamaClient(s).health()
     if not health.get("model_available"):
         pytest.skip(f"Ollama model not available: {health}")
+    print(f"\n[autospec] model={health['model']} info={health.get('model_info')} aider={s.aider.bin}")
     if not shutil.which(s.aider.bin):
         pytest.skip(f"aider not found: {s.aider.bin}")
     return s

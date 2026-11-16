@@ -235,9 +235,26 @@ class OllamaClient(BaseLLMClient):
             names = [m.get("name", "") for m in tags.get("models", [])]
             model = self.settings.ollama.model
             has = any(n == model or n.split(":")[0] == model or n == f"{model}:latest" for n in names)
-            return {"ollama": True, "model": model, "model_available": has, "models": names}
+            result: dict[str, Any] = {"ollama": True, "model": model, "model_available": has, "models": names}
+            if has:
+                result["model_info"] = self._model_info(model)
+            return result
         except Exception as e:  # noqa: BLE001
             return {"ollama": False, "error": str(e)}
+
+    def _model_info(self, model: str) -> dict[str, Any]:
+        """What the alias really is (family, size, quantization, num_ctx), so a run can be attributed."""
+        try:
+            show = self._post("/api/show", {"model": model}, 10)
+            details = show.get("details") or {}
+            ctx = re.search(r"^num_ctx\s+(\d+)", str(show.get("parameters", "")), re.M)
+            return {"family": details.get("family"), "parameter_size": details.get("parameter_size"),
+                    "quantization": details.get("quantization_level"),
+                    "parent_model": details.get("parent_model") or None,
+                    "modelfile_num_ctx": int(ctx.group(1)) if ctx else None,
+                    "request_num_ctx": self.settings.ollama.num_ctx}
+        except Exception as e:  # noqa: BLE001
+            return {"error": str(e)}
 
 
 class FakeLLMMismatch(BaseException):
